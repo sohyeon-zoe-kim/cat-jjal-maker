@@ -5,6 +5,8 @@ const CAT1 = "https://cdn2.thecatapi.com/images/UYLI_E-SZ.jpg";
 const CAT2 = "https://cdn2.thecatapi.com/images/9ed.jpg";
 const CAT3 = "https://cdn2.thecatapi.com/images/1dgqh0UCd.jpg";
 
+const randomCat = "https://api.thecatapi.com/v1/images/search";
+
 const includesHangul = (text) => /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/i.test(text);
 
 const jsonLocalStorage = {

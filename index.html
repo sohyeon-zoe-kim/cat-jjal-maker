@@ -44,6 +44,13 @@
       },
     };
 
+    const fetchCat = async (text) => {
+      const OPEN_API_DOMAIN = "https://api.thecatapi.com/v1/images/search";
+      const response = await fetch(OPEN_API_DOMAIN);
+      const responseJson = await response.json();
+      return `${responseJson[0].url}?${text}`;
+    };
+
     const Title = (props) => {
       return <h1>{props.children}</h1>;
     };
@@ -70,7 +77,7 @@
           setErrorMessage('빈 값으로 만들 수 없습니다.');
           return;
         }
-        updateMainCat();
+        updateMainCat(value);
       }
 
       return (
@@ -87,11 +94,13 @@
       );
     };
 
-    const MainCard = ({ img, onHeartClick }) => {
+    const MainCard = ({ garasadae, img, onHeartClick, aleadyFavorite }) => {
+      const heartIcon = aleadyFavorite ? "💖" : "🤍";
       return (
         <div className="main-card">
+          <p>Cat Says {garasadae}</p>
           <img src={img} alt="고양이" width="400" />
-          <button onClick={onHeartClick}>🤍</button>
+          <button onClick={onHeartClick}>{heartIcon}</button>
         </div>
       );
     };
@@ -100,36 +109,63 @@
       return (
         <li>
           <img src={props.img} style={{ width: "150px" }} />
+          <p style={{ marginTop: "5px", fontSize: "13px" }}>{props.text}</p>
         </li>
       );
     };
 
     function Favorites({ favorites }) {
+
+      if (favorites.length === 0) {
+        return <div>사진 위 하트를 눌러 고양이 사진을 저장해봐요!</div>;
+      }
+
       return (
         <ul className="favorites">
-          {favorites.map(cat => <CatItem img={cat} key={cat} />)}
+          {favorites.map(cat =>
+            <CatItem img={cat} key={cat} text={cat.split('?')[1]} />
+          )}
         </ul>
       );
     };
 
     const App = () => {
       const CAT1 = "https://cdn2.thecatapi.com/images/UYLI_E-SZ.jpg";
-      const CAT2 = "https://cdn2.thecatapi.com/images/9ed.jpg";
-      const CAT3 = "https://cdn2.thecatapi.com/images/1dgqh0UCd.jpg";
+      const [counter, setCounter] = React.useState(() => {
+        return jsonLocalStorage.getItem('counter');
+      })
+      const [garasadae, setGarasadae] = React.useState('MEOW');
+      const [mainCat, setMainCat] = React.useState(`${CAT1}?MEOW`);
+      const [favorites, setFavorites] = React.useState(() => {
+        return jsonLocalStorage.getItem('favorites') || [];
+      });
 
-      const [counter, setCounter] = React.useState(
-        jsonLocalStorage.getItem('counter')
-      );
-      const [mainCat, setMainCat] = React.useState(CAT1);
-      const [favorites, setFavorites] = React.useState(
-        jsonLocalStorage.getItem('favorites') || []
-      );
+      const aleadyFavorite = favorites.includes(mainCat);
 
-      function updateMainCat(event) {
-        setMainCat(CAT2);
-        const nextCounter = counter + 1;
-        setCounter(nextCounter);
-        jsonLocalStorage.setItem('counter', nextCounter);
+      async function setInitialCat() {
+        const newCat = await fetchCat('First cat');
+        setMainCat(newCat);
+        setGarasadae('First cat');
+      }
+
+      React.useEffect(() => {
+        setInitialCat();
+      }, []);
+
+      React.useEffect(() => {
+        console.log("헬로");
+      }, [counter]);
+
+      async function updateMainCat(value) {
+        const newCat = await fetchCat(value);
+        setMainCat(newCat);
+        setGarasadae(value);
+
+        setCounter((prev) => {
+          const nextCounter = prev + 1;
+          jsonLocalStorage.setItem('counter', nextCounter);
+          return nextCounter;
+        })
       }
 
       function handleHeartClick() {
@@ -138,11 +174,13 @@
         jsonLocalStorage.setItem('favorites', nextFavorites);
       }
 
+      const counterTitle = counter === null ? '' : counter + "번째 ";
+
       return (
         <div>
-          <Title>{counter}번째 고양이 가라사대</Title>
+          <Title>{counterTitle}고양이 가라사대</Title>
           <Form updateMainCat={updateMainCat} />
-          <MainCard img={mainCat} onHeartClick={handleHeartClick} />
+          <MainCard garasadae={garasadae} img={mainCat} onHeartClick={handleHeartClick} aleadyFavorite={aleadyFavorite} />
           <Favorites favorites={favorites} />
         </div>
       );
@@ -151,27 +189,6 @@
     const 여기다가그려 = document.querySelector('#app');
 
     ReactDOM.render(<App />, 여기다가그려);
-
-    // // 1. 좋아요 버튼 찾기
-    // const likeButton = document.querySelector(".main-card button");
-    // // 2. 좋아요 버튼 눌렀을 때 이벤트
-    // likeButton.addEventListener("click", function () {
-    //   // 3. 하트 색 바꾸기
-    //   likeButton.innerHTML = "❤️";
-
-    //   // 4. 고양이 사진을 추가할 곳 찾기
-    //   const favorites = document.querySelector(".favorites");
-    //   // 5. 새로운 고양이 사진 만들기
-    //   const newFavoriteImage = document.createElement("img");
-    //   newFavoriteImage.src =
-    //     "https://cdn2.thecatapi.com/images/UYLI_E-SZ.jpg";
-    //   // 6. 고양이 사진을 감싸는 li태그 만들기
-    //   const li = document.createElement("li");
-    //   // 7. li태그에 고양이 사진 넣기
-    //   li.appendChild(newFavoriteImage);
-    //   // 8. 방금 만든 요소 넣기
-    //   favorites.appendChild(li);
-    // });
 
   </script>
 </body>
